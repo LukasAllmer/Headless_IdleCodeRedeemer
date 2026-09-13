@@ -166,7 +166,7 @@ def migrate(conn: sqlite3.Connection) -> list[int]:
         log.info("Applying migration %s (%s)", version, path.name)
         body = path.read_text(encoding="utf-8")
         script = (
-            "BEGIN;\n"
+            "BEGIN;\n"  # nosec B608 # `body` is a packaged migration file, not input
             f"{body}\n"
             "INSERT INTO schema_migrations (version, applied_at) "
             f"VALUES ({version:d}, '{utcnow()}');\n"

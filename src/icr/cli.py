@@ -152,7 +152,6 @@ def account_add(
     if not user_id or not user_hash:
         fail("Provide either --support-url, or both --user-id and --hash.")
 
-    assert user_id and user_hash
     with session() as (_, conn):
         existing = repo.get_account_by_name(conn, name)
         if existing is not None:
@@ -494,7 +493,6 @@ def mailbox_add(
         if not password:
             fail("A password is required for a non-Microsoft mailbox.")
 
-    assert host is not None
     with session() as (_, conn):
         acc = _resolve_account(conn, account)
         try:
@@ -568,7 +566,6 @@ def mailbox_authorize(
                 "Microsoft returned no refresh token. The app registration needs the "
                 "'offline_access' permission."
             )
-        assert tokens.refresh_token
         repo.update_mailbox_secret(conn, mailbox.id, tokens.refresh_token)
 
     console.print(f"Authorized [bold]{name}[/bold]. Check it with `icr mailbox test {name}`.")

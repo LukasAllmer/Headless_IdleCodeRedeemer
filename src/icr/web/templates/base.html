@@ -80,6 +80,7 @@
   <h1>Idle Code Redeemer</h1>
   <nav>
     {% for href, label in [('/', 'Dashboard'), ('/codes', 'Codes'), ('/accounts', 'Accounts'), ('/chests', 'Chests')] %}
+      {# nosemgrep: generic.html-templates.security.var-in-href.var-in-href -- hrefs are the literals above #}
       <a href="{{ href }}" {% if request.url.path == href %}class="active"{% endif %}>{{ label }}</a>
     {% endfor %}
   </nav>

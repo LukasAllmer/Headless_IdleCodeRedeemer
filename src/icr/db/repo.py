@@ -51,7 +51,7 @@ def add_account(
     now = utcnow()
     try:
         with transaction(conn):
-            cur = conn.execute(
+            conn.execute(
                 """
                 INSERT INTO accounts
                     (name, user_id, user_hash, instance_id, enabled, credentials_ok,
@@ -64,9 +64,7 @@ def add_account(
         raise DuplicateAccountError(
             f"An account named {name!r} or with these credentials already exists."
         ) from exc
-    account = get_account(conn, cur.lastrowid)  # type: ignore[arg-type]
-    assert account is not None
-    return account
+    return require_account(conn, name)
 
 
 def get_account(conn: sqlite3.Connection, account_id: int) -> Account | None:
@@ -275,7 +273,7 @@ def outstanding_work(
                 r.id IS NULL
                 OR (r.status IN ({retryable}) AND r.attempts < ?)
               )
-    """
+    """  # nosec B608 # `retryable` interpolates `?` placeholders, never values
     params: list[object] = [*RETRYABLE_STATUSES, max_attempts]
 
     if account_name is not None:

@@ -129,7 +129,7 @@ class MailboxAuth(StrEnum):
     XOAUTH2; `Mailbox.secret` then holds a refresh token rather than a password.
     """
 
-    PASSWORD = "password"
+    PASSWORD = "password"  # nosec B105 # names an auth method, not a credential
     MICROSOFT = "microsoft"
 
 
