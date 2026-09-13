@@ -44,7 +44,7 @@ immediately on start, so a restart never sits idle waiting out an interval.
 ### Docker (recommended)
 
 ```bash
-git clone <this repo> && cd IdleCodeRedeemer_PyServer
+git clone <this repo> && cd Headless_IdleCodeRedeemer
 docker compose up -d
 ```
 
@@ -302,7 +302,7 @@ docker compose start
 A nightly backup via cron on the host:
 
 ```cron
-0 4 * * * cd /path/to/IdleCodeRedeemer_PyServer && docker compose exec -T icr icr db backup >/dev/null
+0 4 * * * cd /path/to/Headless_IdleCodeRedeemer && docker compose exec -T icr icr db backup >/dev/null
 ```
 
 The database contains account credentials in plaintext — back it up somewhere
