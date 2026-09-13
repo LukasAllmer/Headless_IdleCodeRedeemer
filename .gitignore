@@ -1,0 +1,21 @@
+.env
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.log
+
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local database directory, bind-mounted into the container. The directory
+# itself is tracked (via .gitkeep) so a fresh clone owns it -- otherwise
+# Docker creates it as root on first `up` and the container cannot write.
+data/*
+!data/.gitkeep

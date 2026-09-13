@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if ok %}<div class="flash ok">{{ ok }}</div>{% endif %}
+{% if error %}<div class="flash bad">{{ error }}</div>{% endif %}
+
+<div class="panel">
+  <h2>Add or update an account</h2>
+  <form method="post" action="/accounts">
+    <div class="field">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" placeholder="main" required>
+      <div class="hint">Reusing an existing name updates that account's credentials.</div>
+    </div>
+    <div class="field">
+      <label for="support_url">Support URL</label>
+      <input type="text" id="support_url" name="support_url"
+             placeholder="https://&hellip;?user_id=&hellip;&amp;device_hash=&hellip;">
+      <div class="hint">
+        Easiest route: open the in-game support page and paste the whole address here.
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="user_id">&hellip; or user id</label>
+        <input type="text" id="user_id" name="user_id">
+      </div>
+      <div class="field">
+        <label for="user_hash">&hellip; and device hash</label>
+        <input type="password" id="user_hash" name="user_hash">
+      </div>
+    </div>
+    <button type="submit">Save</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Accounts</h2>
+  {% if accounts %}
+  <div class="scroll">
+  <table>
+    <tr><th>Name</th><th>User ID</th><th>Hash</th><th>Credentials</th><th>Added</th><th></th></tr>
+    {% for a in accounts %}
+    <tr>
+      <td>{{ a.name }}{% if not a.enabled %} <span class="muted">(disabled)</span>{% endif %}</td>
+      <td class="code">{{ a.user_id }}</td>
+      <td class="muted">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</td>
+      <td>
+        {% if a.credentials_ok %}<span class="s-ok">ok</span>
+        {% else %}<span class="s-failed">rejected &mdash; re-enter above</span>{% endif %}
+      </td>
+      <td class="muted">{{ a.created_at }}</td>
+      <td>
+        <form method="post" action="/accounts/{{ a.name }}/toggle" class="inline">
+          <button type="submit" class="secondary">{{ 'Disable' if a.enabled else 'Enable' }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  <div class="hint">
+    Deleting an account also deletes its redemption history, so it is CLI-only:
+    <code>icr account remove NAME</code>.
+  </div>
+  {% else %}
+    <p class="muted">No accounts yet.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Newsletter mailboxes</h2>
+  {% if mailboxes %}
+  <div class="scroll">
+  <table>
+    <tr><th>Name</th><th>For</th><th>Address</th><th>Auth</th><th>Last polled</th><th>Status</th></tr>
+    {% for m in mailboxes %}
+    <tr>
+      <td>{{ m.name }}{% if not m.enabled %} <span class="muted">(disabled)</span>{% endif %}</td>
+      <td>{{ m.account_name }}</td>
+      <td class="code">{{ m.username }}</td>
+      <td class="muted">{{ m.auth.value }}</td>
+      <td class="muted">{{ m.last_polled_at or 'never' }}</td>
+      <td>
+        {% if m.needs_authorization %}<span class="s-pending">needs authorize</span>
+        {% elif m.last_error %}<span class="s-failed">{{ m.last_error }}</span>
+        {% elif m.last_polled_at %}<span class="s-ok">ok</span>
+        {% else %}<span class="muted">never polled</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% else %}
+    <p class="muted">No mailboxes. Codes mailed to a newsletter subscriber are single-use,
+    so each mailbox is tied to one account.</p>
+  {% endif %}
+  <div class="hint">
+    Mailboxes are CLI-only &mdash; adding one means a password or a device-code sign-in:
+    <code>icr mailbox add</code>, then <code>icr mailbox test NAME</code>.
+  </div>
+</div>
+{% endblock %}

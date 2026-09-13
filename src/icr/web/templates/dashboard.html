@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="panel">
+  <h2>Overview</h2>
+  <div class="tiles">
+    <div class="tile"><div class="n">{{ accounts | length }}</div><div class="l">Accounts</div></div>
+    <div class="tile"><div class="n">{{ total_codes }}</div><div class="l">Codes known</div></div>
+    <div class="tile"><div class="n">{{ outstanding }}</div><div class="l">Outstanding</div></div>
+    <div class="tile">
+      <div class="n">{{ last_run.total_redeemed if last_run else 0 }}</div>
+      <div class="l">Redeemed last run</div>
+    </div>
+  </div>
+  <div style="margin-top: 1.25rem; display: flex; gap: .6rem; flex-wrap: wrap;">
+    <form method="post" action="/redeem" class="inline"><button type="submit">Redeem now</button></form>
+    <form method="post" action="/poll" class="inline">
+      <button type="submit" class="secondary" {% if not sources_enabled %}disabled{% endif %}>
+        Poll sources now
+      </button>
+    </form>
+  </div>
+  {% if not sources_enabled %}
+    <div class="hint">No code sources enabled. Set <code>ICR_DISCORD_ENABLED=true</code> to poll Discord.</div>
+  {% endif %}
+  {% if last_run_at %}
+    <div class="hint">Last run {{ last_run_at }} &mdash; {{ last_run.describe() }}</div>
+  {% endif %}
+  {% if last_poll %}
+    <div class="hint">Last poll: {% for r in last_poll %}{{ r.describe() }}{% if not loop.last %}; {% endif %}{% endfor %}</div>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Accounts</h2>
+  {% if accounts %}
+  <div class="scroll">
+  <table>
+    <tr>
+      <th>Account</th><th>Outstanding</th><th>Redeemed</th>
+      <th>Already had</th><th>Failed</th><th>Credentials</th>
+    </tr>
+    {% for a in accounts %}
+    <tr>
+      <td>{{ a.name }}{% if not a.enabled %} <span class="muted">(disabled)</span>{% endif %}</td>
+      <td>{{ pending.get(a.name, 0) }}</td>
+      <td>{{ counts.get(a.name, {}).get('success', 0) }}</td>
+      <td>{{ counts.get(a.name, {}).get('already_redeemed', 0) }}</td>
+      <td>{{ counts.get(a.name, {}).get('failed', 0) }}</td>
+      <td>
+        {% if a.credentials_ok %}<span class="s-ok">ok</span>
+        {% else %}<span class="s-failed">rejected</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% else %}
+    <p class="muted">No accounts yet. <a href="/accounts">Add one</a>.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Recent activity</h2>
+  {% if recent %}
+  <div class="scroll">
+  <table>
+    <tr><th>When</th><th>Account</th><th>Code</th><th>Status</th><th>Detail</th></tr>
+    {% for e in recent %}
+    <tr>
+      <td class="muted">{{ e.last_attempt_at }}</td>
+      <td>{{ e.account_name }}</td>
+      <td class="code">{{ e.code }}</td>
+      <td class="s-{{ e.status.value }}">{{ e.status.value }}</td>
+      <td class="muted">{{ e.error or '' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% else %}
+    <p class="muted">Nothing redeemed yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

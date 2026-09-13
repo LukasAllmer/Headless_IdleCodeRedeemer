@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width: 380px; margin: 3rem auto;">
+  <h2>Sign in</h2>
+  {% if bad %}<div class="flash bad">Incorrect token.</div>{% endif %}
+  <form method="post" action="/login">
+    <div class="field">
+      <label for="token">Auth token</label>
+      <input type="password" id="token" name="token" autofocus required>
+      <div class="hint">The value of <code>ICR_WEB_AUTH_TOKEN</code>.</div>
+    </div>
+    <button type="submit">Sign in</button>
+  </form>
+</div>
+{% endblock %}

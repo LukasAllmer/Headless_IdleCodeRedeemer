@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if added %}<div class="flash ok">{{ added }} new code(s) queued.</div>{% endif %}
+{% if error %}<div class="flash bad">{{ error }}</div>{% endif %}
+
+<div class="panel">
+  <h2>Add codes</h2>
+  <form method="post" action="/codes">
+    <div class="field">
+      <label for="text">Codes</label>
+      <textarea id="text" name="text" placeholder="Paste codes, one per line &mdash; or paste a whole Discord message and the codes will be picked out." required></textarea>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="note">Note (optional)</label>
+        <input type="text" id="note" name="note" placeholder="e.g. from the weekly stream">
+      </div>
+      <div class="field">
+        <label for="account">For</label>
+        <select id="account" name="account">
+          <option value="">Every account</option>
+          {% for a in accounts %}<option value="{{ a.name }}">{{ a.name }} only</option>{% endfor %}
+        </select>
+        <div class="hint">Pick one account for single-use codes, such as a newsletter reward.</div>
+      </div>
+    </div>
+    <button type="submit">Add</button>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Redemption matrix</h2>
+  {% if codes %}
+  <div class="scroll">
+  <table>
+    <tr>
+      <th>Code</th><th>Source</th><th>For</th><th>First seen</th>
+      {% for a in accounts %}<th>{{ a.name }}</th>{% endfor %}
+    </tr>
+    {% for c in codes %}
+    <tr>
+      <td class="code">{{ c.code }}</td>
+      <td class="muted">{{ c.source }}</td>
+      <td>
+        {% if c.account_id %}{{ account_names.get(c.account_id, c.account_id) }}
+        {% else %}<span class="muted">all</span>{% endif %}
+      </td>
+      <td class="muted">{{ c.first_seen_at }}</td>
+      {% for a in accounts %}
+        {% set st = matrix[c.code][a.name] %}
+        <td class="s-{{ st }}">{{ st }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% else %}
+    <p class="muted">No codes yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

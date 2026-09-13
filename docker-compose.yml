@@ -1,0 +1,98 @@
+name: icr
+
+services:
+  icr:
+    build: .
+    image: icr:latest
+    container_name: icr
+    restart: unless-stopped
+
+    # The UI can read and write account credentials, so the port is published to
+    # the host's loopback only. Change to "8787:8787" ONLY together with
+    # ICR_WEB_AUTH_TOKEN below.
+    ports:
+      - "127.0.0.1:8787:8787"
+
+    # The database lives on the host so you can back it up, copy it, or point a
+    # sqlite browser at it. Override the location with ICR_DATA_DIR.
+    volumes:
+      - "${ICR_DATA_DIR:-./data}:/data"
+
+    # A bind mount keeps the host directory's ownership -- Docker does not chown
+    # it -- so the container has to run as a uid that can write there. This
+    # default matches the first regular user on most systems; if `id -u` says
+    # otherwise, set ICR_UID/ICR_GID. The app checks this at startup and tells
+    # you exactly what to run if it is wrong.
+    user: "${ICR_UID:-1000}:${ICR_GID:-1000}"
+
+    # All configuration lives here. Secrets are interpolated from the host
+    # environment or a sibling .env file, so nothing sensitive is committed --
+    # everything else is spelled out with its value visible.
+    environment:
+      # Affects log timestamps and scheduler wall-clock. Any zoneinfo name.
+      TZ: "${TZ:-UTC}"
+
+      ICR_DB_PATH: /data/icr.sqlite3
+
+      # Logs go to stdout for `docker compose logs`. Set ICR_LOG_FILE only if
+      # you also mount somewhere to write it.
+      ICR_LOG_LEVEL: INFO
+
+      # Minimum gap between any two game-server requests, applied globally.
+      ICR_REQUEST_DELAY_SECONDS: "2.0"
+      ICR_MAX_REDEEM_ATTEMPTS: "3"
+      ICR_HTTP_TIMEOUT_SECONDS: "30"
+
+      # The only timer. Redemption has none of its own -- it runs after a poll
+      # that leaves work outstanding, and whenever it is triggered by hand.
+      ICR_SOURCE_POLL_INTERVAL_SECONDS: "300"
+
+      # Community lists of multi-use codes. Public pages, no credentials.
+      ICR_INCENDAR_ENABLED: "${ICR_INCENDAR_ENABLED:-true}"
+      ICR_FANDOM_ENABLED: "${ICR_FANDOM_ENABLED:-true}"
+
+      # Needs a bot with the Message Content Intent, in the guild that follows
+      # the Idle Champions #combinations announcement channel.
+      ICR_DISCORD_ENABLED: "${ICR_DISCORD_ENABLED:-false}"
+      ICR_DISCORD_BOT_TOKEN: "${ICR_DISCORD_BOT_TOKEN:-}"
+      ICR_DISCORD_MIRROR_CHANNEL_ID: "${ICR_DISCORD_MIRROR_CHANNEL_ID:-}"
+
+      # Newsletter codes are single-use, so each mailbox is tied to one game
+      # account. Mailboxes are not configured here -- they hold credentials and
+      # live in the database: `docker compose exec icr icr mailbox add`.
+      ICR_EMAIL_ENABLED: "${ICR_EMAIL_ENABLED:-false}"
+      ICR_EMAIL_SENDERS: "newsletters@codenameentertainment.com"
+      ICR_EMAIL_INITIAL_SCAN_DAYS: "0"
+      # Read position is a per-folder UID, so ordinary polls re-read nothing.
+      # This is the recovery window for a folder whose UIDVALIDITY changed.
+      ICR_EMAIL_RESCAN_DAYS: "2"
+      ICR_EMAIL_TIMEOUT_SECONDS: "60"
+      ICR_EMAIL_MAX_MESSAGES_PER_FOLDER: "200"
+      # Microsoft mailboxes only; see docs/email-source.md.
+      ICR_EMAIL_OAUTH_CLIENT_ID: "${ICR_EMAIL_OAUTH_CLIENT_ID:-}"
+      ICR_EMAIL_OAUTH_TENANT: "${ICR_EMAIL_OAUTH_TENANT:-common}"
+
+      ICR_WEB_ENABLED: "true"
+      # 0.0.0.0 is required for the published port to reach the process. The
+      # actual exposure is controlled by the `ports` mapping above, which is why
+      # ICR_WEB_INSECURE_BIND is acceptable here and nowhere else.
+      ICR_WEB_HOST: 0.0.0.0
+      ICR_WEB_PORT: "8787"
+      ICR_WEB_AUTH_TOKEN: "${ICR_WEB_AUTH_TOKEN:-}"
+      ICR_WEB_INSECURE_BIND: "true"
+
+    security_opt:
+      - no-new-privileges:true
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+# To use a Docker-managed named volume instead of a host directory, swap the
+# `volumes:` entry above for `icr-data:/data`, drop the `user:` line so the
+# image's own uid applies, and uncomment this:
+#
+# volumes:
+#   icr-data:
